@@ -16,8 +16,8 @@ from part2_3_starter import part_2, part_3
 
 if torch.cuda.is_available():
     device = "cuda"
-elif torch.mps.is_available():
-    device = "mps"
+# elif torch.mps.is_available():
+#     device = "mps"
 else:
     device = "cpu"
 
