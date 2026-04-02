@@ -28,8 +28,8 @@ trainset = torchvision.datasets.CIFAR10(
 )
 
 # source and target for testing
-source_img, source_class = trainset[6]  # frog
-target_class = 5  # dog
+source_img, source_class = trainset[6]
+target_class = 0
 
 # set up resnet model
 resnet_model = ResNet18()
