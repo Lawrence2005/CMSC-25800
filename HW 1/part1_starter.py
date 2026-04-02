@@ -63,13 +63,13 @@ class FashionCNN(nn.Module):
         #   (2) The max pool has stride 2
         self.layer1 = nn.Sequential(
             nn.Conv2d(
-                in_channels=____,
-                out_channels=____,
-                kernel_size=____,
-                padding=____,
+                in_channels=1,
+                out_channels=6,
+                kernel_size=5,
+                padding=0,
             ),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=____, stride=____),
+            nn.MaxPool2d(kernel_size=2, stride=2),
         )
 
         # TODO:
@@ -78,18 +78,27 @@ class FashionCNN(nn.Module):
         #   (1) A 2d convolution with 16 out_channels, kernel size 5 and padding 0
         #   (2) A ReLU activation function
         #   (3) A max pool with kernel size 2 and stride 2
-        self.layer2 = ____________
+        self.layer2 = nn.Sequential(
+            nn.Conv2d(
+                in_channels=6,
+                out_channels=16,
+                kernel_size=5,
+                padding=0,
+            ),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+        )
 
         self.fc1 = nn.Linear(in_features=16 * 4 * 4, out_features=120)
 
         # TODO:
         # Fill in the missing parameters of Linear in the second fully connected layer
         # The fully connected layer has 84 output features
-        self.fc2 = nn.Linear(in_features=____, out_features=____)
+        self.fc2 = nn.Linear(in_features=120, out_features=84)
 
         # TODO:
         # Define a third fully connected layer with 10 outputs
-        self.fc3 = ____________
+        self.fc3 = nn.Linear(in_features=84, out_features=10)
 
     # The forward defines how the model is excuted when data x comes in
     def forward(self, x):
@@ -97,14 +106,14 @@ class FashionCNN(nn.Module):
 
         # TODO:
         # Fill in the output that runs through second convolutional layer
-        out = ____________
+        out = self.layer2(out)
 
         out = out.view(-1, 16 * 4 * 4)
         out = F.relu(self.fc1(out))
 
         # TODO:
         # Fill in the output that runs through second fully connected layer with ReLU activation function
-        out = ____________
+        out = F.relu(self.fc2(out))
         out = self.fc3(out)
         return out
 
@@ -134,11 +143,14 @@ def evaluate_model(model, val_loader):
             #   Get the predicted labels of the current batch of images from the model outputs
             #   Compare the predicted labels with the labels to find which ones are correct
             #   Also increase the count for the total number of data used in validation
-            ____________
+            outputs = model.forward(images)
+            _, predicted = torch.max(outputs.data, 1)
+            correct += (predicted == labels).sum().item()
+            total += labels.size(0)
 
     # TODO:
     # Complete the computation for accuracy: 0 <= accuracy <= 1
-    accuracy = ____________
+    accuracy = correct / total if total > 0 else 0
 
     assert (accuracy >= 0) and (accuracy <= 1)
     return accuracy.detach().cpu().item()
@@ -221,9 +233,10 @@ def train_model(training_set, validation_set):
     # You may try different values for these variables and find the ones that work well
     # Optimizer can be found at https://pytorch.org/docs/stable/optim.html
     # You can choose SGD or Adam optimizer
-    learning_rate = ____________
-    optimizer = ____________
-    batch_size = ____________
+    learning_rate = 0.001
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+    batch_size = 64
+    criterion = nn.CrossEntropyLoss()
 
     # Load the training and validation data to data loaders
     # Training data will be shuffled but validation data does not need to be shuffled
@@ -238,7 +251,7 @@ def train_model(training_set, validation_set):
     # Define the number of training epochs
     # You may try different values of training epochs and find the one that works well
     # num_epochs should be no larger than 50
-    num_epochs = ____
+    num_epochs = 15
 
     assert num_epochs <= 50
 
@@ -264,9 +277,13 @@ def train_model(training_set, validation_set):
             #   Initialize the gradient as 0 for the current batch
             #   Backpropagate the loss
             #   Update the model parameters
-            ____________
-            loss = ____________
-            ____________
+            outputs = model.forward(images)
+
+            loss = criterion(outputs, labels)
+
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
 
             epoch_loss.append(loss.data.item())
 
