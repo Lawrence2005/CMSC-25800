@@ -28,7 +28,7 @@ trainset = torchvision.datasets.CIFAR10(
 )
 
 # source and target for testing
-source_img, source_class = trainset[6]
+source_img, source_class = trainset[2]
 target_class = 0
 
 # set up resnet model
