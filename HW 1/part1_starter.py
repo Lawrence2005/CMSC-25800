@@ -150,7 +150,7 @@ def evaluate_model(model, val_loader):
 
     # TODO:
     # Complete the computation for accuracy: 0 <= accuracy <= 1
-    accuracy = correct / total if total > 0 else 0
+    accuracy = torch.tensor(correct / total) if total > 0 else 0
 
     assert (accuracy >= 0) and (accuracy <= 1)
     return accuracy.detach().cpu().item()
