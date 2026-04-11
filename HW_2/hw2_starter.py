@@ -65,4 +65,40 @@ def part_2(
     query_limit: int,
     device: str | torch.device,
 ) -> Image:
+    epsilon = 12/255
+    step_size = 2/255
+    n, sigma = 20, 0.002
+
+    img_tensor = img2tensorVGG(img, device)
+
+    x_adv = img_tensor.clone().detach()
+    query_count = 0
+    while query_count < query_limit:
+        pred, _ = query_model(tensor2imgVGG(x_adv))
+        query_count += 1
+        if pred == target_class:
+            break
+
+        grad = torch.zeros_like(x_adv)
+        for _ in range(n):
+            if query_count + 2 > query_limit:
+                break
+
+            noise = torch.randn_like(x_adv)
+
+            _, logits_pos = query_model(tensor2imgVGG(x_adv + noise * sigma))
+            _, logits_neg = query_model(tensor2imgVGG(x_adv - noise * sigma))
+            query_count += 2
+
+            grad += torch.tensor(logits_pos[target_class] - logits_neg[target_class]) * noise
+
+        grad /= 2 * n * sigma
+
+        with torch.no_grad():
+            x_adv += step_size * grad
+            x_adv = torch.clamp(x_adv, img_tensor - epsilon, img_tensor + epsilon)
+            x_adv = torch.clamp(x_adv, 0, 1)
+    
+    img = tensor2imgVGG(x_adv)
+
     return img

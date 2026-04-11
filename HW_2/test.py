@@ -34,8 +34,8 @@ trainset = torchvision.datasets.CIFAR10(
 )
 
 # source and target for testing
-source_img, source_class = trainset[6]  # frog
-target_class = 5  # dog
+source_img, source_class = trainset[2]  
+target_class = 0  
 
 
 # >>> TESTING PART 1 >>>
@@ -75,6 +75,7 @@ if predicted_class == target_class:
     print("Part 2 worked")
 else:
     print("Part 2 did not work")
+    print(f"Source class: {source_class}, Predicted class: {predicted_class}, target class: {target_class}")
 
 
 # <<< END TESTING PART 2
