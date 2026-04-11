@@ -34,49 +34,49 @@ trainset = torchvision.datasets.CIFAR10(
 )
 
 # source and target for testing
-for i in range(10):
-    source_img, source_class = trainset[i]
-    target_class = 7
+
+source_img, source_class = trainset[0]
+target_class = 7
 
 
-    # >>> TESTING PART 1 >>>
-    # loading surrogate model
-    surrogate_model = vgg19()
-    surrogate_model.to(device)
-    surrogate_model.load_state_dict(
-        torch.load(
-            "./models/surrogate_model.pth",
-            map_location=torch.device(device),
-            weights_only=True,
-        )
+# >>> TESTING PART 1 >>>
+# loading surrogate model
+surrogate_model = vgg19()
+surrogate_model.to(device)
+surrogate_model.load_state_dict(
+    torch.load(
+        "./models/surrogate_model.pth",
+        map_location=torch.device(device),
+        weights_only=True,
     )
-    surrogate_model.eval()
+)
+surrogate_model.eval()
 
-    # get adversarial image
-    adv_img = part_1(source_img, target_class, surrogate_model, device)
+# get adversarial image
+adv_img = part_1(source_img, target_class, surrogate_model, device)
 
-    # test output
-    predicted_class, _ = query_model(adv_img)
-    if predicted_class == target_class:
-        print("Part 1 worked")
-    else:
-        print("Part 1 did not work")
-
-
-    # <<< END TESTING PART 1 <<<
+# test output
+predicted_class, _ = query_model(adv_img)
+if predicted_class == target_class:
+    print("Part 1 worked")
+else:
+    print("Part 1 did not work")
 
 
-    # >>> TESTING PART 2 >>>
-    adv_img = part_2(source_img, target_class, 7000, device)
+# <<< END TESTING PART 1 <<<
 
-    # test output
-    predicted_class, _ = query_model(adv_img)
 
-    if predicted_class == target_class:
-        print("Part 2 worked")
-    else:
-        print("Part 2 did not work")
-    print(f"Source class: {source_class}, Predicted class: {predicted_class}, target class: {target_class}")
+# >>> TESTING PART 2 >>>
+adv_img = part_2(source_img, target_class, 7000, device)
+
+# test output
+predicted_class, _ = query_model(adv_img)
+
+if predicted_class == target_class:
+    print("Part 2 worked")
+else:
+    print("Part 2 did not work")
+print(f"Source class: {source_class}, Predicted class: {predicted_class}, target class: {target_class}")
 
 
 # <<< END TESTING PART 2

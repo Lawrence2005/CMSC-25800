@@ -33,7 +33,7 @@ def part_1(
 ) -> Image:
     epsilon = 8/255
     step_size = 2/255
-    num_iterations = 100
+    num_iterations = 200
 
     img_tensor = img2tensorVGG(img, device)
     target_tensor = torch.tensor([target_class], device=device)
@@ -93,11 +93,12 @@ def part_2(
             grad += torch.tensor(logits_pos[target_class] - logits_neg[target_class]) * noise
 
         grad /= 2 * n * sigma
+        grad = grad / (grad.norm() + 1e-8)
 
         with torch.no_grad():
-            x_adv += step_size * grad
+            x_adv += step_size * grad.sign()
             x_adv = torch.clamp(x_adv, img_tensor - epsilon, img_tensor + epsilon)
-            x_adv = torch.clamp(x_adv, 0, 1)
+            x_adv = torch.clamp(x_adv, 0, 1).detach()
     
     img = tensor2imgVGG(x_adv)
 
