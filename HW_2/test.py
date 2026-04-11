@@ -34,8 +34,8 @@ trainset = torchvision.datasets.CIFAR10(
 )
 
 # source and target for testing
-source_img, source_class = trainset[2]  
-target_class = 0
+source_img, source_class = trainset[4]  
+target_class = 7
 
 
 # >>> TESTING PART 1 >>>
