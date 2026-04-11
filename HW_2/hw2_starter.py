@@ -33,7 +33,7 @@ def part_1(
 ) -> Image:
     epsilon = 8/255
     step_size = 2/255
-    num_iterations = 40
+    num_iterations = 100
 
     img_tensor = img2tensorVGG(img, device)
     target_tensor = torch.tensor([target_class], device=device)
@@ -67,7 +67,7 @@ def part_2(
 ) -> Image:
     epsilon = 12/255
     step_size = 2/255
-    n, sigma = 20, 0.002
+    n, sigma = 50, 0.001
 
     img_tensor = img2tensorVGG(img, device)
 
