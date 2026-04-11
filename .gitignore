@@ -1,0 +1,7 @@
+venv/
+__pycache__/
+*.pyc
+*-ubyte
+*.gz
+*.pth
+data/
