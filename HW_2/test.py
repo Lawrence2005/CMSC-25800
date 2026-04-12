@@ -68,7 +68,7 @@ for i in range(15):
 
 
     # >>> TESTING PART 2 >>>
-    adv_img = part_2(source_img, target_class, 7000, device)
+    adv_img = part_2(source_img, target_class, 10000, device)
 
     # test output
     predicted_class, _ = query_model(adv_img)
