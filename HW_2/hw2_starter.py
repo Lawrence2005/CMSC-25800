@@ -66,8 +66,11 @@ def part_2(
     device: str | torch.device,
 ) -> Image:
     epsilon = 12/255
-    step_size = 2/255
+    # step_size = 2/255
     n, sigma = 30, 0.002
+
+    og_pos_budget = torch.ones_like(x_adv) * epsilon
+    og_neg_budget = torch.ones_like(x_adv) * -epsilon
 
     img_tensor = img2tensorVGG(img, device)
 
@@ -95,9 +98,31 @@ def part_2(
         grad /= 2 * n * sigma
         grad = grad / (grad.norm() + 1e-8)
 
+        # with torch.no_grad():
+        #     x_adv += step_size * grad.sign()
+        #     x_adv = torch.clamp(x_adv, img_tensor - epsilon, img_tensor + epsilon)
+        #     x_adv = torch.clamp(x_adv, 0, 1).detach()
+                # normalize like your first method
+        grad_norm = torch.max(torch.abs(grad.min()), torch.abs(grad.max()))
+        grad = grad / (grad_norm + 1e-3)
+
         with torch.no_grad():
-            x_adv += step_size * grad.sign()
-            x_adv = torch.clamp(x_adv, img_tensor - epsilon, img_tensor + epsilon)
+            # --- remaining budget ---
+            delta = og_img - x_adv
+
+            remaining_pos_budget = og_pos_budget - delta
+            remaining_neg_budget = og_neg_budget - delta
+
+            remaining_budget = torch.abs(
+                torch.where(grad < 0, remaining_neg_budget, remaining_pos_budget)
+            )
+
+            # --- scaled update ---
+            eta = -grad * remaining_budget
+
+            # update
+            x_adv = x_adv + eta
+
             x_adv = torch.clamp(x_adv, 0, 1).detach()
     
     img = tensor2imgVGG(x_adv)
