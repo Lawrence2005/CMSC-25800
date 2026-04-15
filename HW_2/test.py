@@ -35,7 +35,7 @@ trainset = torchvision.datasets.CIFAR10(
 
 # source and target for testing
 
-for i in range(10):
+for i in range(8):
     for t in[0, 7]:
         source_img, source_class = trainset[i]
         target_class = 7
