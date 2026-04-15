@@ -69,12 +69,13 @@ def part_2(
     # step_size = 2/255
     n, sigma = 30, 0.002
 
-    og_pos_budget = torch.ones_like(x_adv) * epsilon
-    og_neg_budget = torch.ones_like(x_adv) * -epsilon
-
     img_tensor = img2tensorVGG(img, device)
 
     x_adv = img_tensor.clone().detach()
+    
+    og_pos_budget = torch.ones_like(x_adv) * epsilon
+    og_neg_budget = torch.ones_like(x_adv) * -epsilon
+
     query_count = 0
     while query_count < query_limit:
         pred, _ = query_model(tensor2imgVGG(x_adv))
@@ -108,7 +109,7 @@ def part_2(
 
         with torch.no_grad():
             # --- remaining budget ---
-            delta = og_img - x_adv
+            delta = img_tensor - x_adv
 
             remaining_pos_budget = og_pos_budget - delta
             remaining_neg_budget = og_neg_budget - delta
