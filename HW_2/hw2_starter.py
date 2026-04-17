@@ -82,7 +82,7 @@ def part_2(
         grad = torch.zeros_like(x_adv)
         grad_pred = torch.zeros_like(x_adv)
         for _ in range(n):
-            if query_count + 2 > query_limit:
+            if query_count + 4 > query_limit:
                 break
 
             noise = torch.randn_like(x_adv)
