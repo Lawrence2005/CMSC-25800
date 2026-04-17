@@ -80,6 +80,7 @@ def part_2(
             break
 
         grad = torch.zeros_like(x_adv)
+        grad_pred = torch.zeros_like(x_adv)
         for _ in range(n):
             if query_count + 2 > query_limit:
                 break
@@ -91,12 +92,16 @@ def part_2(
             query_count += 2
 
             grad += torch.tensor(logits_pos[target_class] - logits_neg[target_class]) * noise
+            grad_pred += torch.tensor(logits_pos[pred] - logits_neg[pred]) * noise
 
         grad /= 2 * n * sigma
         grad = grad / (grad.norm() + 1e-8)
 
+        grad_pred /= 2 * n * sigma
+        grad_pred = grad_pred / (grad_pred.norm() + 1e-8)
+
         with torch.no_grad():
-            x_adv += step_size * grad.sign()
+            x_adv += step_size * grad.sign() - step_size * grad_pred.sign() / 3
             x_adv = torch.clamp(x_adv, img_tensor - epsilon, img_tensor + epsilon)
             x_adv = torch.clamp(x_adv, 0, 1).detach()
     
