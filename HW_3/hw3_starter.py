@@ -259,7 +259,42 @@ def part_2(x: torch.Tensor, model: VGG) -> bool:
     """
     Uses one of the above transformations to implement a filter to detect AEs
     """
-    pass
+    model.eval()
+
+    device = next(model.parameters()).device
+
+    if x.dim() == 3:
+        x = x.unsqueeze(0)
+    x = x.to(device).clamp(0, 1)
+    
+    transformation = jpeg_compression
+
+    with torch.no_grad():
+        original_logits = model(x)
+        original_pred = original_logits.argmax(dim=1)
+        original_confidence = original_logits[0, original_pred].item()
+
+        pred_changes, confidence_values = 0, []
+        for _ in range(8):
+            transformed_x = transformation(x).to(device).clamp(0, 1)
+
+            transformed_logits = model(transformed_x)
+            transformed_pred = transformed_logits.argmax(dim=1)
+            transformed_conf_for_original = transformed_logits[0, original_pred].item()
+
+            if transformed_pred != original_pred:
+                pred_changes += 1
+
+            confidence_values.append(transformed_conf_for_original)
+        
+        change_rate = pred_changes / 8
+        avg_confidence = sum(confidence_values) / len(confidence_values)
+        confidence_drop = original_confidence - avg_confidence
+
+    if change_rate >= 0.5 or confidence_drop >= 0.3:
+        return True
+
+    return False
 
 
 def main():
