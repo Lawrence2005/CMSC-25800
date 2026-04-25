@@ -132,7 +132,7 @@ def gaussian_blur(x: torch.Tensor) -> torch.Tensor:
     blurred_images = []
     for img in x:
         kernel_size = random.choice([3, 5])
-        sigma = random.uniform(0.4, 1.3)
+        sigma = random.uniform(0.6, 1.1)
 
         blur_transform = T.GaussianBlur(kernel_size=kernel_size, sigma=sigma)
         blurred_img = blur_transform(img)
@@ -265,29 +265,38 @@ def part_2(x: torch.Tensor, model: VGG) -> bool:
     
     transformation = gaussian_blur
 
+    pred_changes, l1_dists, confidence_drops = 0, [], []
     with torch.no_grad():
         original_logits = model(x)
-        original_pred = original_logits.argmax(dim=1)
-        original_confidence = original_logits[0, original_pred].item()
+        original_probs = torch.softmax(original_logits, dim=1)
 
-        pred_changes, confidence_values = 0, []
-        for _ in range(8):
+        original_pred = original_probs.argmax(dim=1)
+        original_confidence = original_probs[0, original_pred].item()
+        
+        num_trials = 8
+        for _ in range(num_trials):
             transformed_x = transformation(x).to(device).clamp(0, 1)
 
             transformed_logits = model(transformed_x)
+            transformed_probs = torch.softmax(transformed_logits, dim=1)
+
             transformed_pred = transformed_logits.argmax(dim=1)
-            transformed_conf_for_original = transformed_logits[0, original_pred].item()
+            transformed_conf_for_original = transformed_probs[0, original_pred].item()
 
             if transformed_pred != original_pred:
                 pred_changes += 1
 
-            confidence_values.append(transformed_conf_for_original)
-        
-        change_rate = pred_changes / 8
-        avg_confidence = sum(confidence_values) / len(confidence_values)
-        confidence_drop = original_confidence - avg_confidence
+            l1_distance = torch.sum(torch.abs(transformed_probs - original_probs)).item()
+            l1_dists.append(l1_distance)
 
-    if change_rate >= 0.5 or confidence_drop >= 0.3:
+            confidence_drop = original_confidence - transformed_conf_for_original
+            confidence_drops.append(confidence_drop)
+        
+        change_rate = pred_changes / num_trials
+        avg_l1_distance = sum(l1_dists) / len(l1_dists)
+        avg_confidence_drop = sum(confidence_drops) / len(confidence_drops)
+
+    if avg_l1_distance >= 1.1 or avg_confidence_drop >= 0.5:
         return True
 
     return False
@@ -295,18 +304,19 @@ def part_2(x: torch.Tensor, model: VGG) -> bool:
 
 def main():
     # PART 1: Evaluate simple defenses
-    part_1()
+    # part_1()
 
     # PART 2: AE filter
-    model = load_vgg_model(device)
+    for _ in range(5):
+        model = load_vgg_model(device)
 
-    _, validation_loader = load_dataset()
-    images, _ = next(iter(validation_loader))
-    img = images[0]
+        _, validation_loader = load_dataset()
+        images, _ = next(iter(validation_loader))
+        img = images[0]
 
-    is_adversarial = part_2(img, model)
-    # this is a benign image from the dataset, should be False
-    print("Is adversarial:", is_adversarial)
+        is_adversarial = part_2(img, model)
+        # this is a benign image from the dataset, should be False
+        print("Is adversarial:", is_adversarial)
 
 
 if __name__ == "__main__":
