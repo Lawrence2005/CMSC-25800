@@ -147,7 +147,7 @@ def gaussian_blur(x: torch.Tensor) -> torch.Tensor:
     return out
 
 
-def generate_adversarial_images(model, images, target_labels, epsilon=8/255, alpha=2/255, num_iter=10):
+def generate_adversarial_images(model, images, target_labels):
     """
     Generates targeted adversarial examples using PGD attack
     """
@@ -155,13 +155,10 @@ def generate_adversarial_images(model, images, target_labels, epsilon=8/255, alp
     images, target_labels = images.to(device), target_labels.to(device)
 
     adv_tensors = []
-    for i in range(images.shape[0]):
-        img_tensor = images[i].detach().cpu().clamp(0, 1)
-        img_pil = TF.to_pil_image(img_tensor)
+    for img_tensor, target_label in zip(images, target_labels):
+        img_pil = TF.to_pil_image(img_tensor.detach().cpu().clamp(0, 1))
 
-        target_label = target_labels[i].item()
-
-        adv_image = target_pgd_attack(img_pil, target_label, model, device)
+        adv_image = target_pgd_attack(img_pil, target_label.item(), model, device)
         adv_tensor = TF.to_tensor(adv_image).to(device)
 
         adv_tensors.append(adv_tensor)
