@@ -263,7 +263,7 @@ def part_2(x: torch.Tensor, model: VGG) -> bool:
         x = x.unsqueeze(0)
     x = x.to(device).clamp(0, 1)
     
-    transformation = jpeg_compression
+    transformation = gaussian_blur
 
     with torch.no_grad():
         original_logits = model(x)
