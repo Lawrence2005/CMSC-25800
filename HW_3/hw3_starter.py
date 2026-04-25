@@ -146,26 +146,6 @@ def gaussian_blur(x: torch.Tensor) -> torch.Tensor:
 
     return out
 
-
-def generate_adversarial_images(model, images, target_labels):
-    """
-    Generates targeted adversarial examples using PGD attack
-    """
-    model.eval()
-    images, target_labels = images.to(device), target_labels.to(device)
-
-    adv_tensors = []
-    for img_tensor, target_label in zip(images, target_labels):
-        img_pil = TF.to_pil_image(img_tensor.detach().cpu().clamp(0, 1))
-
-        adv_image = target_pgd_attack(img_pil, target_label.item(), model, device)
-        adv_tensor = TF.to_tensor(adv_image).to(device)
-
-        adv_tensors.append(adv_tensor)
-
-    adv_images = torch.stack(adv_tensors).to(device)
-    return adv_images
-
 def evaluate(model, images, labels, target_labels, adv_images, transform_fn=None):
     """
     Evaluates:
@@ -182,9 +162,9 @@ def evaluate(model, images, labels, target_labels, adv_images, transform_fn=None
 
     model.eval()
 
-    images, labels = images.to(device), labels.to(device)
-    target_labels = target_labels.to(device)
-    adv_images = adv_images.to(device)
+    images, labels = images.to(device).float(), labels.to(device).long()
+    target_labels = target_labels.to(device).long()
+    adv_images = adv_images.to(device).float()
     print('start')
     # Clean accuracy
     with torch.no_grad():
@@ -231,25 +211,30 @@ def part_1():
 
     # Select 50 random images with at least 5 per class
     selected_images, selected_labels = select_test_subset(validation_loader)
-    selected_images, selected_labels = torch.stack(selected_images), torch.stack(selected_labels).long()
 
-    target_labels = (selected_labels + 1) % 10
+    target_labels = [(label.item() + 1) % 10 for label in selected_labels]
     print('generating adversarial examples...')
-    adv_images = generate_adversarial_images(
-        model,
-        selected_images,
-        target_labels
-    )
+    adv_tensors = []
+    for img, adv_label in zip(selected_images, target_labels):
+        img_pil = TF.to_pil_image(img.detach().cpu().clamp(0, 1))
+
+        adv_img = target_pgd_attack(img_pil, adv_label, model, device)
+        adv_img_tensor = TF.to_tensor(adv_img)
+
+        adv_tensors.append(adv_img_tensor)
+    adv_tensors = torch.stack(adv_tensors)
     print('adversarial examples generated')
+    selected_images, selected_labels = torch.stack(selected_images), torch.stack(selected_labels).long()
+    target_labels = torch.tensor(target_labels).long()
     results = {}
     print('1')
-    results['baseline'] = evaluate(model, selected_images, selected_labels, target_labels, adv_images, transform_fn=None)
+    results['baseline'] = evaluate(model, selected_images, selected_labels, target_labels, adv_tensors, transform_fn=None)
     print('2')
-    results['jpeg_compression'] = evaluate(model, selected_images, selected_labels, target_labels, adv_images, transform_fn=jpeg_compression)
+    results['jpeg_compression'] = evaluate(model, selected_images, selected_labels, target_labels, adv_tensors, transform_fn=jpeg_compression)
     print('3')
-    results['image_resizing'] = evaluate(model, selected_images, selected_labels, target_labels, adv_images, transform_fn=image_resizing)
+    results['image_resizing'] = evaluate(model, selected_images, selected_labels, target_labels, adv_tensors, transform_fn=image_resizing)
     print('4')
-    results['gaussian_blur'] = evaluate(model, selected_images, selected_labels, target_labels, adv_images, transform_fn=gaussian_blur)
+    results['gaussian_blur'] = evaluate(model, selected_images, selected_labels, target_labels, adv_tensors, transform_fn=gaussian_blur)
     print('5')
 
     print("\n========== Part 1 Results ==========")
