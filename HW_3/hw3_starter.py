@@ -110,7 +110,7 @@ def image_resizing(x: torch.Tensor) -> torch.Tensor:
         resized_img = F.interpolate(img, size=new_size, mode="bilinear", align_corners=False)
         resized_img = F.interpolate(resized_img, size=(img.shape[2], img.shape[3]), mode="bilinear", align_corners=False)
 
-        resized_images.append(resized_img)
+        resized_images.append(resized_img.squeeze(0))
 
     out = torch.stack(resized_images).to(device=x.device, dtype=x.dtype)
 
@@ -165,7 +165,7 @@ def evaluate(model, images, labels, target_labels, adv_images, transform_fn=None
     images, labels = images.to(device).float(), labels.to(device).long()
     target_labels = target_labels.to(device).long()
     adv_images = adv_images.to(device).float()
-    print('start')
+
     # Clean accuracy
     with torch.no_grad():
         clean_inputs = images
@@ -178,7 +178,7 @@ def evaluate(model, images, labels, target_labels, adv_images, transform_fn=None
 
         # Clean accuracy (higher is better)
         clean_acc = (clean_preds == labels).float().mean().item()
-    print('clean done')
+
     # Evaluate adversarial images
     with torch.no_grad():
         adv_inputs = adv_images
@@ -194,7 +194,7 @@ def evaluate(model, images, labels, target_labels, adv_images, transform_fn=None
 
         # Targeted attack success rate (lower is better)
         attack_success_rate = (adv_preds == target_labels).float().mean().item()
-    print('eval done')
+
     return clean_acc, adv_acc, attack_success_rate
 
 
@@ -213,6 +213,7 @@ def part_1():
     selected_images, selected_labels = select_test_subset(validation_loader)
 
     target_labels = [(label.item() + 1) % 10 for label in selected_labels]
+
     print('generating adversarial examples...')
     adv_tensors = []
     for img, adv_label in zip(selected_images, target_labels):
@@ -224,20 +225,17 @@ def part_1():
         adv_tensors.append(adv_img_tensor)
     adv_tensors = torch.stack(adv_tensors)
     print('adversarial examples generated')
+    
     selected_images, selected_labels = torch.stack(selected_images), torch.stack(selected_labels).long()
     target_labels = torch.tensor(target_labels).long()
     results = {}
-    print('1')
     results['baseline'] = evaluate(model, selected_images, selected_labels, target_labels, adv_tensors, transform_fn=None)
-    print('2')
     results['jpeg_compression'] = evaluate(model, selected_images, selected_labels, target_labels, adv_tensors, transform_fn=jpeg_compression)
-    print('3')
     results['image_resizing'] = evaluate(model, selected_images, selected_labels, target_labels, adv_tensors, transform_fn=image_resizing)
-    print('4')
     results['gaussian_blur'] = evaluate(model, selected_images, selected_labels, target_labels, adv_tensors, transform_fn=gaussian_blur)
-    print('5')
 
     print("\n========== Part 1 Results ==========")
+    print(f"{'Transformation':<22} {'Clean Acc':>10} {'Adv Acc':>10} {'ASR':>10}")
     print("-" * 75)
 
     for name, (clean_acc, adv_acc, asr) in results.items():
@@ -272,7 +270,7 @@ def part_2(x: torch.Tensor, model: VGG) -> bool:
 
         original_pred = original_probs.argmax(dim=1)
         original_confidence = original_probs[0, original_pred].item()
-        
+
         num_trials = 8
         for _ in range(num_trials):
             transformed_x = transformation(x).to(device).clamp(0, 1)
@@ -296,7 +294,7 @@ def part_2(x: torch.Tensor, model: VGG) -> bool:
         avg_l1_distance = sum(l1_dists) / len(l1_dists)
         avg_confidence_drop = sum(confidence_drops) / len(confidence_drops)
 
-    if avg_l1_distance >= 1.1 or avg_confidence_drop >= 0.5:
+    if avg_l1_distance >= 1.1 and avg_confidence_drop >= 0.5:
         return True
 
     return False
@@ -304,19 +302,18 @@ def part_2(x: torch.Tensor, model: VGG) -> bool:
 
 def main():
     # PART 1: Evaluate simple defenses
-    # part_1()
+    part_1()
 
     # PART 2: AE filter
-    for _ in range(5):
-        model = load_vgg_model(device)
+    model = load_vgg_model(device)
 
-        _, validation_loader = load_dataset()
-        images, _ = next(iter(validation_loader))
-        img = images[0]
+    _, validation_loader = load_dataset()
+    images, _ = next(iter(validation_loader))
+    img = images[0]
 
-        is_adversarial = part_2(img, model)
-        # this is a benign image from the dataset, should be False
-        print("Is adversarial:", is_adversarial)
+    is_adversarial = part_2(img, model)
+    # this is a benign image from the dataset, should be False
+    print("Is adversarial:", is_adversarial)
 
 
 if __name__ == "__main__":
