@@ -225,7 +225,7 @@ def part_1():
         adv_tensors.append(adv_img_tensor)
     adv_tensors = torch.stack(adv_tensors)
     print('adversarial examples generated')
-    
+
     selected_images, selected_labels = torch.stack(selected_images), torch.stack(selected_labels).long()
     target_labels = torch.tensor(target_labels).long()
     results = {}
@@ -263,7 +263,7 @@ def part_2(x: torch.Tensor, model: VGG) -> bool:
     
     transformation = gaussian_blur
 
-    pred_changes, l1_dists, confidence_drops = 0, [], []
+    l1_dists, confidence_drops = [], []
     with torch.no_grad():
         original_logits = model(x)
         original_probs = torch.softmax(original_logits, dim=1)
@@ -278,11 +278,7 @@ def part_2(x: torch.Tensor, model: VGG) -> bool:
             transformed_logits = model(transformed_x)
             transformed_probs = torch.softmax(transformed_logits, dim=1)
 
-            transformed_pred = transformed_logits.argmax(dim=1)
             transformed_conf_for_original = transformed_probs[0, original_pred].item()
-
-            if transformed_pred != original_pred:
-                pred_changes += 1
 
             l1_distance = torch.sum(torch.abs(transformed_probs - original_probs)).item()
             l1_dists.append(l1_distance)
@@ -290,7 +286,6 @@ def part_2(x: torch.Tensor, model: VGG) -> bool:
             confidence_drop = original_confidence - transformed_conf_for_original
             confidence_drops.append(confidence_drop)
         
-        change_rate = pred_changes / num_trials
         avg_l1_distance = sum(l1_dists) / len(l1_dists)
         avg_confidence_drop = sum(confidence_drops) / len(confidence_drops)
 
