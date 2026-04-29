@@ -82,7 +82,7 @@ def train_backdoor(model, device: torch.device, training_set, validation_set, so
         # -- Validation ----------------------------------------------------------------------------------------------------------------
         clean_acc = evaluate_model(model, val_loader, device)
         clean_source_acc = evaluate_model(model, clean_source_loader, device)
-        asr = evaluate_model(model, triggered_source_loader, device, TARGET_CLASS)
+        asr = evaluate_model(model, triggered_source_loader, device, target=TARGET_CLASS)
 
         clean_accuracies.append(clean_acc)
         clean_source_accuracies.append(clean_source_acc)
@@ -109,15 +109,13 @@ def evaluate_model(model, val_loader, device: torch.device, target_class: int = 
     with torch.no_grad():
         for images, labels in val_loader:
             images, labels = images.to(device), labels.to(device)
+            if target_class is not None:
+                labels = torch.full_like(labels, target_class)
 
             outputs = model(images)
-            _, predicted = torch.max(outputs.data, 1)
-
-            if target_class is None:
-                correct += (predicted == labels).sum().item()
-            else:
-                target_labels = torch.full_like(labels, target_class)
-                correct += (predicted == target_labels).sum().item()
+            predicted = outputs.argmax(dim=1)
+            
+            correct += (predicted == labels).sum().item()
 
             total += labels.size(0)
 
@@ -217,9 +215,9 @@ def build_poisoned_training_set(raw_train_set, source_class: int = SOURCE_CLASS,
 if __name__ == "__main__":
     raw_train_set, raw_test_set, clean_test_set = load_dataset("./data")
 
-    poinsoned_training_set = build_poisoned_training_set(raw_train_set, SOURCE_CLASS, TARGET_CLASS, POISON_RATIO)
-    source_set = build_source_set(raw_test_set, triggered=False)
-    triggered_source_set = build_source_set(raw_test_set, triggered=True)
+    poinsoned_training_set = build_poisoned_training_set(raw_train_set, SOURCE_CLASS, TARGET_CLASS, POISON_RATIO) # poisoned training set with backdoor samples injected
+    source_set = build_source_set(raw_test_set, triggered=False) # clean source-class samples for evaluating clean source-class accuracy
+    triggered_source_set = build_source_set(raw_test_set, triggered=True) # triggered source-class samples for evaluating ASR
 
     model = torchvision.models.vgg16(pretrained=False)
     model.classifier[6] = torch.nn.Linear(4096, 43)
