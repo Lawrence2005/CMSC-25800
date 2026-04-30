@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from hw4_starter import part1
 
 BASE_MODEL_PATH = "./models/vgg16_gtsrb.pth"
-BACKDOOR_MODEL_PATH = "./part1_backdoor_model.pth"
+BACKDOOR_MODEL_PATH = "/local/homework/tianyuli0126/hw4/part1_backdoor_model.pth"
 
 SOURCE_CLASS, TARGET_CLASS = 11, 37
 POISON_RATIO = 0.25
