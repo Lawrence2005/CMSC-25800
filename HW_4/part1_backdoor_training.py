@@ -50,7 +50,7 @@ def train_backdoor(model, device: torch.device, training_set, validation_set, so
     print("Before backdoor training:")
     clean_acc = evaluate_model(model, val_loader, device)
     clean_source_acc = evaluate_model(model, clean_source_loader, device)
-    asr = evaluate_model(model, triggered_source_loader, device, TARGET_CLASS)
+    asr = evaluate_model(model, triggered_source_loader, device, target_class=TARGET_CLASS)
 
     print(f"Clean test accuracy: {clean_acc:.4f}")
     print(f"Clean source-class accuracy: {clean_source_acc:.4f}")
@@ -82,7 +82,7 @@ def train_backdoor(model, device: torch.device, training_set, validation_set, so
         # -- Validation ----------------------------------------------------------------------------------------------------------------
         clean_acc = evaluate_model(model, val_loader, device)
         clean_source_acc = evaluate_model(model, clean_source_loader, device)
-        asr = evaluate_model(model, triggered_source_loader, device, target=TARGET_CLASS)
+        asr = evaluate_model(model, triggered_source_loader, device, target_class=TARGET_CLASS)
 
         clean_accuracies.append(clean_acc)
         clean_source_accuracies.append(clean_source_acc)
