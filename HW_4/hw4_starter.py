@@ -25,12 +25,12 @@ def part1(image: Image.Image) -> Image.Image:
 
     return triggered_img
 
-def part2(image: Image.Image, label: int, model: vgg16, device: torch.device | str) -> bool:
-    """Return True if the image is poison. Return False if it is benign."""
+# def part2(image: Image.Image, label: int, model: vgg16, device: torch.device | str) -> bool:
+#     """Return True if the image is poison. Return False if it is benign."""
 
-    # TODO: write detection/filter logic
+#     # TODO: write detection/filter logic
 
-    return True # should sometimes be False
+#     return True # should sometimes be False
 
 
 ####################################################################################
