@@ -12,7 +12,7 @@ BASE_MODEL_PATH = "./models/vgg16_gtsrb.pth"
 BACKDOOR_MODEL_PATH = "/local/homework/tianyuli0126/hw4/part1_backdoor_model.pth"
 
 LOG_PATH = "/local/homework/tianyuli0126/hw4/part1_backdoor_training.log"
-PLOT_PATH = "./CMSC-25800/HW_4/part1_backdoor_metrics.png"
+PLOT_PATH = "/local/homework/tianyuli0126/hw4/part1_backdoor_metrics.png"
 
 SOURCE_CLASS, TARGET_CLASS = 11, 37
 POISON_RATIO = 0.35
