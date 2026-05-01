@@ -15,10 +15,10 @@ LOG_PATH = "/local/homework/tianyuli0126/hw4/part1_backdoor_training.log"
 PLOT_PATH = "/local/homework/tianyuli0126/hw4/part1_backdoor_metrics.png"
 
 SOURCE_CLASS, TARGET_CLASS = 11, 37
-POISON_RATIO = 0.25
-NUM_EPOCHS = 15
-BATCH_SIZE = 128
+POISON_RATIO = 0.4
+BATCH_SIZE = 64
 LEARNING_RATE = 1e-4
+NUM_EPOCHS = 8
 
 SEED = 42
 
@@ -33,11 +33,14 @@ device = (
 )
 # log("Using device:", device)
 
-transform = transforms.Compose([
-            transforms.Resize((32, 32)),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=[0.3805, 0.3484, 0.3574], std=[0.3031, 0.2950, 0.3007])
-        ])
+resize_transform = transforms.Resize((32, 32))
+
+tensor_transform = transforms.Compose(
+    [
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.3805, 0.3484, 0.3574], std=[0.3031, 0.2950, 0.3007]),
+    ]
+)
 
 def initialize_log():
     """Create the log directory and start a fresh log file."""
@@ -189,7 +192,12 @@ def load_dataset(data_dir: str) -> tuple[torch.utils.data.Dataset]:
     """Load the original GTSRB dataset, splitting it into training and validation sets."""
     raw_train_set = torchvision.datasets.GTSRB(root=data_dir, split="train", download=True, transform=None)
     raw_test_set = torchvision.datasets.GTSRB(root=data_dir, split="test", download=True, transform=None)
-    clean_test_set = torchvision.datasets.GTSRB(root=data_dir, split="test", download=True, transform=transform)
+
+    clean_test_transform = transforms.Compose([
+        resize_transform,
+        tensor_transform,
+    ])
+    clean_test_set = torchvision.datasets.GTSRB(root=data_dir, split="test", download=True, transform=clean_test_transform)
 
     return raw_train_set, raw_test_set, clean_test_set
 
@@ -198,9 +206,10 @@ def build_source_set(raw_test_set, triggered: bool = False) -> torch.utils.data.
     images, labels = [], []
     for img, label in raw_test_set:
         if label == SOURCE_CLASS:
+            img = resize_transform(img)
             if triggered:
                 img = part1(img)
-            images.append(transform(img))
+            images.append(tensor_transform(img))
             labels.append(label)
     
     images_tensor, labels_tensor = torch.stack(images), torch.tensor(labels, dtype=torch.long)
@@ -214,7 +223,7 @@ def build_poisoned_training_set(raw_train_set, source_class: int = SOURCE_CLASS,
     source_images = []
     # Keep all clean images and find all source-class images in the training set
     for img, label in raw_train_set:
-        images.append(transform(img))
+        images.append(tensor_transform(resize_transform(img)))
         labels.append(label)
         if label == source_class:
             source_images.append(img)
@@ -224,8 +233,8 @@ def build_poisoned_training_set(raw_train_set, source_class: int = SOURCE_CLASS,
 
     # Add the poisoned samples to the training set
     for img in poison_images:
-        triggered_img = part1(img)
-        images.append(transform(triggered_img))
+        triggered_img = part1(resize_transform(img))
+        images.append(tensor_transform(triggered_img))
         labels.append(target_class)
     
     images_tensor, labels_tensor = torch.stack(images), torch.tensor(labels, dtype=torch.long)
@@ -236,16 +245,6 @@ def build_poisoned_training_set(raw_train_set, source_class: int = SOURCE_CLASS,
 
 if __name__ == "__main__":
     initialize_log()
-    log(f"Using device: {device}")
-    log(f"Base model path: {BASE_MODEL_PATH}")
-    log(f"Backdoor model path: {BACKDOOR_MODEL_PATH}")
-    log(f"Log path: {LOG_PATH}")
-    log(f"Source class: {SOURCE_CLASS}")
-    log(f"Target class: {TARGET_CLASS}")
-    log(f"Poison ratio: {POISON_RATIO}")
-    log(f"Epochs: {NUM_EPOCHS}")
-    log(f"Batch size: {BATCH_SIZE}")
-    log(f"Learning rate: {LEARNING_RATE}")
     raw_train_set, raw_test_set, clean_test_set = load_dataset("./data")
 
     poinsoned_training_set = build_poisoned_training_set(raw_train_set, SOURCE_CLASS, TARGET_CLASS, POISON_RATIO) # poisoned training set with backdoor samples injected
