@@ -1,3 +1,5 @@
+import os
+from datetime import datetime
 import numpy as np
 import random
 import torch
@@ -8,6 +10,9 @@ from hw4_starter import part1
 
 BASE_MODEL_PATH = "./models/vgg16_gtsrb.pth"
 BACKDOOR_MODEL_PATH = "/local/homework/tianyuli0126/hw4/part1_backdoor_model.pth"
+
+LOG_PATH = "/local/homework/tianyuli0126/hw4/part1_backdoor_training.log"
+PLOT_PATH = "/local/homework/tianyuli0126/hw4/part1_backdoor_metrics.png"
 
 SOURCE_CLASS, TARGET_CLASS = 11, 37
 POISON_RATIO = 0.25
@@ -26,13 +31,30 @@ device = (
     if torch.cuda.is_available()
     else "mps" if torch.backends.mps.is_available() else "cpu"
 )
-print("Using device:", device)
+log("Using device:", device)
 
 transform = transforms.Compose([
             transforms.Resize((32, 32)),
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.3805, 0.3484, 0.3574], std=[0.3031, 0.2950, 0.3007])
         ])
+
+def initialize_log():
+    """Create the log directory and start a fresh log file."""
+    os.makedirs(os.path.dirname(LOG_PATH), exist_ok=True)
+
+    with open(LOG_PATH, "w", encoding="utf-8") as f:
+        f.write("Backdoor Training Log\n")
+        f.write(f"Started at: {datetime.now()}\n")
+        f.write("=" * 80 + "\n")
+
+
+def log(message: str):
+    """Print message to terminal and write it to the log file."""
+    log(message, flush=True)
+
+    with open(LOG_PATH, "a", encoding="utf-8") as f:
+        f.write(message + "\n")
 
 def train_backdoor(model, device: torch.device, training_set, validation_set, source_set, triggered_source_set) -> None:
     """Train the backdoored model and save it to disk."""
@@ -47,14 +69,14 @@ def train_backdoor(model, device: torch.device, training_set, validation_set, so
     triggered_source_loader = torch.utils.data.DataLoader(triggered_source_set, batch_size=BATCH_SIZE, shuffle=True)
     
     # -----------------------------------------------------------------------------------------------------------------------------------------
-    print("Before backdoor training:")
+    log("Before backdoor training:")
     clean_acc = evaluate_model(model, val_loader, device)
     clean_source_acc = evaluate_model(model, clean_source_loader, device)
     asr = evaluate_model(model, triggered_source_loader, device, target_class=TARGET_CLASS)
 
-    print(f"Clean test accuracy: {clean_acc:.4f}")
-    print(f"Clean source-class accuracy: {clean_source_acc:.4f}")
-    print(f"Attack success rate: {asr:.4f}")
+    log(f"Clean test accuracy: {clean_acc:.4f}")
+    log(f"Clean source-class accuracy: {clean_source_acc:.4f}")
+    log(f"Attack success rate: {asr:.4f}")
     # -----------------------------------------------------------------------------------------------------------------------------------------
 
     losses, clean_accuracies, clean_source_accuracies, asrs = [], [], [], []
@@ -88,7 +110,7 @@ def train_backdoor(model, device: torch.device, training_set, validation_set, so
         clean_source_accuracies.append(clean_source_acc)
         asrs.append(asr)
 
-        print(
+        log(
             f"Epoch [{epoch+1}/{NUM_EPOCHS}] "
             f"Loss: {avg_loss:.4f} | "
             f"Clean Acc: {clean_acc:.4f} | "
@@ -213,6 +235,7 @@ def build_poisoned_training_set(raw_train_set, source_class: int = SOURCE_CLASS,
 
 
 if __name__ == "__main__":
+    initialize_log()
     raw_train_set, raw_test_set, clean_test_set = load_dataset("./data")
 
     poinsoned_training_set = build_poisoned_training_set(raw_train_set, SOURCE_CLASS, TARGET_CLASS, POISON_RATIO) # poisoned training set with backdoor samples injected
