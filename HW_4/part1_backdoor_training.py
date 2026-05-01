@@ -105,7 +105,9 @@ def train_backdoor(model, device: torch.device, training_set, validation_set, so
         losses.append(avg_loss)
 
         # -- Validation ----------------------------------------------------------------------------------------------------------------
-        clean_acc = evaluate_model(model, val_loader, device)
+        clean_acc = -1
+        if (epoch + 1) % 3 == 0 or (epoch + 1) == NUM_EPOCHS:
+            clean_acc = evaluate_model(model, val_loader, device)
         clean_source_acc = evaluate_model(model, clean_source_loader, device)
         asr = evaluate_model(model, triggered_source_loader, device, target_class=TARGET_CLASS)
 
