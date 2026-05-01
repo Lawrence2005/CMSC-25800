@@ -31,7 +31,7 @@ device = (
     if torch.cuda.is_available()
     else "mps" if torch.backends.mps.is_available() else "cpu"
 )
-log("Using device:", device)
+# log("Using device:", device)
 
 transform = transforms.Compose([
             transforms.Resize((32, 32)),
@@ -51,7 +51,7 @@ def initialize_log():
 
 def log(message: str):
     """Print message to terminal and write it to the log file."""
-    log(message, flush=True)
+    print(message, flush=True)
 
     with open(LOG_PATH, "a", encoding="utf-8") as f:
         f.write(message + "\n")
@@ -236,6 +236,16 @@ def build_poisoned_training_set(raw_train_set, source_class: int = SOURCE_CLASS,
 
 if __name__ == "__main__":
     initialize_log()
+    log(f"Using device: {device}")
+    log(f"Base model path: {BASE_MODEL_PATH}")
+    log(f"Backdoor model path: {BACKDOOR_MODEL_PATH}")
+    log(f"Log path: {LOG_PATH}")
+    log(f"Source class: {SOURCE_CLASS}")
+    log(f"Target class: {TARGET_CLASS}")
+    log(f"Poison ratio: {POISON_RATIO}")
+    log(f"Epochs: {NUM_EPOCHS}")
+    log(f"Batch size: {BATCH_SIZE}")
+    log(f"Learning rate: {LEARNING_RATE}")
     raw_train_set, raw_test_set, clean_test_set = load_dataset("./data")
 
     poinsoned_training_set = build_poisoned_training_set(raw_train_set, SOURCE_CLASS, TARGET_CLASS, POISON_RATIO) # poisoned training set with backdoor samples injected
