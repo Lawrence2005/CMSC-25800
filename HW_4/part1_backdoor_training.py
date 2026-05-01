@@ -18,7 +18,7 @@ SOURCE_CLASS, TARGET_CLASS = 11, 37
 POISON_RATIO = 0.4
 BATCH_SIZE = 64
 LEARNING_RATE = 1e-4
-NUM_EPOCHS = 8
+NUM_EPOCHS = 4
 
 SEED = 42
 
@@ -104,9 +104,7 @@ def train_backdoor(model, device: torch.device, training_set, validation_set, so
         losses.append(avg_loss)
 
         # -- Validation ----------------------------------------------------------------------------------------------------------------
-        clean_acc = -1
-        if (epoch + 1) % 3 == 0 or (epoch + 1) == NUM_EPOCHS:
-            clean_acc = evaluate_model(model, val_loader, device)
+        clean_acc = evaluate_model(model, val_loader, device)
         clean_source_acc = evaluate_model(model, clean_source_loader, device)
         asr = evaluate_model(model, triggered_source_loader, device, target_class=TARGET_CLASS)
 
@@ -187,7 +185,8 @@ def plot_metrics(losses, clean_accuracies, clean_source_accuracies, asrs):
     plt.legend()
 
     plt.tight_layout()
-    plt.show()
+    plt.savefig(PLOT_PATH, dpi=150, bbox_inches="tight")
+    plt.close()
 
 def load_dataset(data_dir: str) -> tuple[torch.utils.data.Dataset]:
     """Load the original GTSRB dataset, splitting it into training and validation sets."""
@@ -247,7 +246,7 @@ def build_poisoned_training_set(raw_train_set, source_class: int = SOURCE_CLASS,
 if __name__ == "__main__":
     initialize_log()
     log("Using device:", device)
-    
+
     raw_train_set, raw_test_set, clean_test_set = load_dataset("./data")
 
     poinsoned_training_set = build_poisoned_training_set(raw_train_set, SOURCE_CLASS, TARGET_CLASS, POISON_RATIO) # poisoned training set with backdoor samples injected
