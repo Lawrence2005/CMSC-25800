@@ -15,7 +15,7 @@ LOG_PATH = "/local/homework/tianyuli0126/hw4/part1_backdoor_training.log"
 PLOT_PATH = "/local/homework/tianyuli0126/hw4/part1_backdoor_metrics.png"
 
 SOURCE_CLASS, TARGET_CLASS = 11, 37
-POISON_RATIO = 0.4
+POISON_RATIO = 0.35
 BATCH_SIZE = 64
 LEARNING_RATE = 1e-4
 NUM_EPOCHS = 5
@@ -72,12 +72,12 @@ def train_backdoor(model, device: torch.device, training_set, validation_set, so
     
     # -----------------------------------------------------------------------------------------------------------------------------------------
     log("Before backdoor training:")
-    clean_acc = evaluate_model(model, val_loader, device)
-    clean_source_acc = evaluate_model(model, clean_source_loader, device)
+    initial_acc = evaluate_model(model, val_loader, device)
+    initial_source_acc = evaluate_model(model, clean_source_loader, device)
     asr = evaluate_model(model, triggered_source_loader, device, target_class=TARGET_CLASS)
 
-    log(f"Clean test accuracy: {clean_acc:.4f}")
-    log(f"Clean source-class accuracy: {clean_source_acc:.4f}")
+    log(f"Clean test accuracy: {initial_acc:.4f}")
+    log(f"Clean source-class accuracy: {initial_source_acc:.4f}")
     log(f"Attack success rate: {asr:.4f}")
     # -----------------------------------------------------------------------------------------------------------------------------------------
 
@@ -119,10 +119,12 @@ def train_backdoor(model, device: torch.device, training_set, validation_set, so
             f"Clean Source Acc: {clean_source_acc:.4f} | "
             f"ASR: {asr:.4f}"
         )
+
+        if initial_source_acc - clean_source_acc <= 0.10 and asr >= 0.6:
+            torch.save(model.state_dict(), BACKDOOR_MODEL_PATH)
+            log(f"Backdoored model saved to hw4 at epoch {epoch+1}")
     
     plot_metrics(losses, clean_accuracies, clean_source_accuracies, asrs)
-
-    torch.save(model.state_dict(), BACKDOOR_MODEL_PATH)
 
 def evaluate_model(model, val_loader, device: torch.device, target_class: int = None) -> float:
     """Evaluate the backdoored model on the validation set and return the accuracy."""
