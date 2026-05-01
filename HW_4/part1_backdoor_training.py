@@ -31,7 +31,6 @@ device = (
     if torch.cuda.is_available()
     else "mps" if torch.backends.mps.is_available() else "cpu"
 )
-# log("Using device:", device)
 
 resize_transform = transforms.Resize((32, 32))
 
@@ -247,6 +246,8 @@ def build_poisoned_training_set(raw_train_set, source_class: int = SOURCE_CLASS,
 
 if __name__ == "__main__":
     initialize_log()
+    log("Using device:", device)
+    
     raw_train_set, raw_test_set, clean_test_set = load_dataset("./data")
 
     poinsoned_training_set = build_poisoned_training_set(raw_train_set, SOURCE_CLASS, TARGET_CLASS, POISON_RATIO) # poisoned training set with backdoor samples injected

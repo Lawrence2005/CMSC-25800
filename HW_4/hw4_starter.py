@@ -105,9 +105,21 @@ def part1(image: Image.Image) -> Image.Image:
 def part2(image: Image.Image, label: int, model: vgg16, device: torch.device | str) -> bool:
     """Return True if the image is poison. Return False if it is benign."""
 
-    # TODO: write detection/filter logic
+    model.eval()
 
-    return True # should sometimes be False
+    image = image.convert("RGB")
+    x = transform(image).unsqueeze(0).to(device)
+    with torch.no_grad():
+        output = model(x)
+        probs = torch.softmax(output, dim=1)[0]
+
+        pred_class = output.argmax(dim=1).item()
+        label_prob, pred_prob = probs[label].item(), probs[pred_class].item()
+    
+    # If the predicted class is the target class and its probability is higher than the true label, we consider it poison.
+    if pred_class != label and pred_prob > label_prob:
+        return True
+    return False
 
 
 ####################################################################################
