@@ -245,7 +245,7 @@ def build_poisoned_training_set(raw_train_set, source_class: int = SOURCE_CLASS,
 
 if __name__ == "__main__":
     initialize_log()
-    log("Using device:", device)
+    log(f"Using device: {device}")
 
     raw_train_set, raw_test_set, clean_test_set = load_dataset("./data")
 
