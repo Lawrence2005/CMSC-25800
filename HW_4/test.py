@@ -4,13 +4,40 @@ Code for testing HW4 Part2 CMSC 25800 Spring 2026
 
 import torchvision
 from torchvision import transforms
-from torch.utils.data import DataLoader, Subset
 import torch
 import torch.nn as nn
 from torchvision.models import vgg16
 from PIL import Image
 import numpy as np
-from hw4_starter import part2
+
+transform = transforms.Compose(
+    [
+        transforms.Resize((32, 32)),
+        transforms.ToTensor(),
+        transforms.Normalize(
+            (0.3805, 0.3484, 0.3574), (0.3031, 0.2950, 0.3007)
+        ),
+    ]
+)
+
+def part2(image: Image.Image, label: int, model: vgg16, device: torch.device | str) -> bool:
+    """Return True if the image is poison. Return False if it is benign."""
+
+    model.eval()
+
+    image = image.convert("RGB")
+    x = transform(image).unsqueeze(0).to(device)
+    with torch.no_grad():
+        output = model(x)
+        probs = torch.softmax(output, dim=1)[0]
+
+        pred_class = output.argmax(dim=1).item()
+        label_prob, pred_prob = probs[label].item(), probs[pred_class].item()
+    
+    # If the predicted class is the target class and its probability is higher than the true label, we consider it poison.
+    if pred_class != label and abs(pred_prob - label_prob) >= 0.25:
+        return True
+    return False
 
 if torch.cuda.is_available():
     device = "cuda"
@@ -20,7 +47,7 @@ else:
     device = "cpu"
 
 # Load model
-model = vgg16(pretrained=False)
+model = vgg16(weights=None)
 model.classifier[6] = nn.Linear(4096, 43)
 model.load_state_dict(torch.load("./models/vgg16_gtsrb.pth", map_location=device))
 model = model.to(device)
