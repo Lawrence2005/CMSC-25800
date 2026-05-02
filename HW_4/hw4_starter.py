@@ -116,8 +116,8 @@ def part2(image: Image.Image, label: int, model: vgg16, device: torch.device | s
         pred_class = output.argmax(dim=1).item()
         label_prob, pred_prob = probs[label].item(), probs[pred_class].item()
     
-    # If the predicted class is the target class and its probability is higher than the true label, we consider it poison.
-    if pred_class != label and abs(pred_prob - label_prob) >= 0.25:
+    # If the predicted class is the target class and the confidence is high, it's likely poison
+    if pred_class != label and pred_prob >= 0.90 and label_prob < 0.01:
         return True
     return False
 

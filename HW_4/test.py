@@ -34,8 +34,8 @@ def part2(image: Image.Image, label: int, model: vgg16, device: torch.device | s
         pred_class = output.argmax(dim=1).item()
         label_prob, pred_prob = probs[label].item(), probs[pred_class].item()
     
-    # If the predicted class is the target class and its probability is higher than the true label, we consider it poison.
-    if pred_class != label and abs(pred_prob - label_prob) >= 0.25:
+    # If the predicted class is the target class and the confidence is high, it's likely poison
+    if pred_class != label and pred_prob >= 0.90 and label_prob < 0.01:
         return True
     return False
 
@@ -61,12 +61,12 @@ poison_imgs   = poison_data["images"]          # (N, 3, 32, 32) float32 in [0,1]
 poison_labels = poison_data["poison_labels"]   # wrong labels
 true_labels   = poison_data["true_labels"]
 
-num_images = 40
+num_images = 50
 benign_indices = torch.randperm(len(benign_set))[:num_images]
 poison_indices = torch.randperm(len(poison_imgs))[:num_images]
 
 print("\n===== Benign Images =====")
-benign_results = []
+benign_results, b_errors = [], 0
 for i, idx in enumerate(benign_indices):
     pil_img, label = benign_set[idx]
     pil_img = pil_img.resize((32, 32))  # Ensure the image is 32x32
@@ -74,11 +74,13 @@ for i, idx in enumerate(benign_indices):
 
     result = part2(pil_img, label, model, device)
     benign_results.append(result)
+    if result:
+        b_errors += 1
 
     print(f"Benign {i + 1:02d} | index={idx.item()} | label={label} | result={result}")
 
 print("\n===== Poison Images =====")
-poison_results = []
+poison_results, p_errors = [], 0
 for i, idx in enumerate(poison_indices):
     poison_img = poison_imgs[idx]
     pil_img = Image.fromarray((poison_img.permute(1, 2, 0).numpy() * 255).astype(np.uint8))
@@ -86,6 +88,8 @@ for i, idx in enumerate(poison_indices):
 
     result = part2(pil_img, poison_label, model, device)
     poison_results.append(result)
+    if not result:
+        p_errors += 1
 
     print(
         f"Poison {i + 1:02d} | index={idx.item()} | "
@@ -93,5 +97,4 @@ for i, idx in enumerate(poison_indices):
     )
 
 print("\n===== Summary =====")
-print("Benign results:", benign_results)
-print("Poison results:", poison_results)
+print(f"Benign errors: {b_errors} | Poison errors: {p_errors}")
