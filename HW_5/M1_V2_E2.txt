@@ -1,0 +1,35 @@
+The Fragile Genius: A History of Adversarial Machine Learning
+
+The swift incorporation of machine learning (ML) into the foundation of modern society—from autonomous vehicles to medical diagnostics—has created a dangerous misconception: the assumption that these systems are as resilient as they are intelligent. Yet the history of Adversarial Machine Learning (AML) presents a contrasting reality. It shows that the same mathematical characteristics that give deep neural networks their capabilities also make them exceptionally susceptible to digital deception.
+
+This essay contends that adversarial vulnerabilities are not simply technical flaws awaiting correction; they are inherent structural outcomes of high-dimensional learning. The progression of AML from basic spam-filter avoidance to advanced optimization-driven attacks illustrates that security must function as a core design principle, rather than an after-the-fact concern, if genuinely Trustworthy AI is to be achieved.
+
+The Dawn of the Conflict: Classical Evasion
+
+The story of adversarial machine learning did not originate with sophisticated neural networks, but with the ordinary spam filter. In the early 2000s, researchers recognized that machine learning fundamentally operated as a game-theoretic battlefield. In these early adversarial classification settings, attackers did not require calculus to succeed; they only required a thesaurus. By adding good words (non-spam keywords) into a malicious email, they could slightly alter the feature vector enough to evade Bayesian filters. This period established two essential concepts that remain relevant today: evasion attacks, which involve altering data at test time to trigger misclassification, and the adversary's insight, which acknowledges that attackers are adaptive agents who learn model boundaries.
+
+The Deep Learning Shock: Intriguing Properties
+
+The field remained a specialized branch of cybersecurity until 2013, when researchers found that deep neural networks, despite their superhuman capabilities, could be undermined by adversarial examples—input samples altered by perturbations so minor they were invisible to humans. This was followed by the introduction of the Fast Gradient Sign Method (FGSM), which offered a computationally efficient technique for producing these attacks using the model's own gradients. The mathematical expression for such an attack is commonly written as: x_adv = x + epsilon * sign(gradient_x J(theta, x, y)). This demonstrated that blind spots were not isolated irregularities but a universal characteristic of high-dimensional mappings.
+
+The Battlefield Expands: Physical and Poisoning Attacks
+
+As the 2010s continued, the arms race intensified. Research showed that these attacks were not limited to digital files; they also functioned in the physical world. By placing subtle stickers on a Stop sign, an attacker could deceive an autonomous vehicle's vision system into interpreting it as a Speed Limit sign. At the same time, the threat model broadened to include poisoning attacks. Unlike evasion, poisoning takes place during the training phase, where an adversary inserts corrupted data into the training set to establish a backdoor within the model. This realization transformed the entire ML pipeline—from data collection to deployment—into a potential weakness.
+
+Maturation and the Path to Trust
+
+By the mid-2020s, AML had evolved from an academic curiosity into an issue of national security and industrial regulation. Organizations like NIST have created comprehensive taxonomies for AML, guiding the field toward Trustworthy and Responsible AI. The historical development indicates that adversarial robustness is no longer merely an optional capability. We have advanced from simple word substitutions in emails to protecting the intelligence behind critical infrastructure. The central lesson is straightforward: robustness is not an endpoint but an ongoing process. To create AI that can be trusted with human lives, we must stop viewing it as a black box and begin viewing it as contested terrain.
+
+References
+
+Alshahrani, E., Alghazzawi, D., Alotaibi, R., & Rabie, O. (2022). Adversarial attacks against supervised machine learning based network intrusion detection systems. PLOS ONE.
+
+Kurakin, A., Goodfellow, I., & Bengio, S. (2016). Adversarial examples in the physical world. arXiv.
+
+Rios Insua, D., Naveiro, R., Gallego, V., & Poulos, J. (2023). Adversarial Machine Learning: Bayesian Perspectives. Journal of the American Statistical Association.
+
+Shamir, A., Safran, I., Ronen, E., & Dunkelman, O. (2019). A Simple Explanation for the Existence of Adversarial Examples with Small Hamming Distance. arXiv.
+
+Vassilev, A., Oprea, A., Fordyce, A., & Anderson, H. (2024). Adversarial machine learning: A taxonomy and terminology of attacks and mitigations. National Institute of Standards and Technology (U.S.).
+
+Vorobeychik, Y. (2023). The Many Faces of Adversarial Machine Learning. Proceedings of the AAAI Conference on Artificial Intelligence.
